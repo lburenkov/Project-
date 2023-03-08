@@ -1,0 +1,259 @@
+---
+title: "Project 2"
+author: "Laura Burenkov"
+date: "`r Sys.Date()`"
+output: openintro::lab_report
+---
+
+### Information
+
+The goal of this assignment is to give you practice in preparing different data sets for downstream analysis work. Your task is to:
+
+Choose any three of the “wide” datasets identified in the Week 6 Discussion items. (You may use your own dataset; please don’t use my Sample Post dataset, since that was used in your Week 5 assignment!) For each of the three chosen datasets:
+Create a .CSV file (or optionally, a MySQL database!) that includes all of the information included in the dataset.
+You’re encouraged to use a “wide” structure similar to how the information appears in the discussion item, so that you can practice tidying and transformations as described below.
+Read the information from your .CSV file into R, and use tidyr and dplyr as needed to tidy and transform your data. [Most of your grade will be based on this step!]
+Perform the analysis requested in the discussion post
+Your code should be in an R Markdown file, posted to rpubs.com, and should include narrative descriptions of your data cleanup work, analysis, and conclusions.
+Please include in your homework submission, for each of the three chosen datasets:
+The URL to the .Rmd file in your GitHub repository, and
+The URL for your rpubs.com
+
+
+### *Data set 1*
+
+### Loading data
+
+```{r}
+artists <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-01-17/artists.csv')
+```
+### Packages
+
+```{r load-packages, message=FALSE}
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(readr)
+library(tidyverse)
+library(openintro)
+library(forcats)
+library(ggplot2)
+
+```
+
+### General information
+
+```{r}
+head(artists)
+```
+```{r}
+str(artists)
+```
+
+
+### Data manipulation
+
+Looking for Na values
+```{r}
+is.na(artists)
+ 
+```
+
+```{r}
+na.omit(artists)
+```
+
+
+There is no missing data. Data set looks good. 
+
+
+
+Lets eliminate columns that are not necessary for analysis.
+
+```{r}
+dsartists <-artists %>% select(-c('artist_race_nwi'))
+dsartists
+```
+I deleted column "artist_race_nwi" since there are other two columns with this data. 
+
+
+Now I can proceed to rename columns.
+
+```{r}
+dfartists <- dsartists %>% 
+           rename("Artist_name" = "artist_name",
+           "Edition_number" = "edition_number",
+           "Year" = "year",
+           "Artist_nationality" = "artist_nationality",
+           "Artist_nationality_other" = "artist_nationality_other",
+           "Artist_gender" = "artist_gender",
+           "Artist_race" = "artist_race",
+           "Artist_ethnicity" = "artist_ethnicity",
+           "Book" = "book",
+           "Space_ratio_per_page_total" = "space_ratio_per_page_total", 
+           "Artist_unique_id" = "artist_unique_id",
+           "Moma_count_to_year" = "moma_count_to_year",
+           "Whitney_count_to_year" = "whitney_count_to_year")
+print(dfartists)
+```
+
+
+### Exploratory Analysis
+Now data looks clean to start exploring variables.
+
+```{r}
+hist(dfartists$Year)
+
+```
+
+Clear tendency to have more exhibitions during the years.
+
+```{r}
+ggplot(dfartists, aes(x=reorder(Artist_gender, Artist_gender, function(x)-length(x)))) +
+geom_bar(fill='red') +  labs(x='Artist gender')
+```
+
+We can in this graph that there some rows with N/A that tell us some rows do not have information. It is important to decide what kind information we are looking for. I could just drop the rows with NA if I consider is no important or using average for numerical data or the most use for categorical data. also to make this decision we need to know the amount that we are losing if we just drop the rows with no info. Sometimes is not relevant but if we have many rows with missing or incomplete information we might need to take another decision. 
+
+
+### *Data set 2*
+
+###Loading data
+
+
+```{r}
+chocolate <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-01-18/chocolate.csv')
+```
+
+### General Information
+
+```{r}
+head(chocolate)
+```
+```{r}
+str(chocolate)
+```
+
+
+
+### Data Manipulation
+
+Looking for NA
+
+```{r}
+is.na(chocolate)
+```
+```{r}
+na.omit(chocolate)
+```
+Looks like data set has no missing values. Also I will drop columns: ref and most_memorable_characteristics.  "ref" correspond to an ID and I do not think I will need it and "most_memorable_characteristics" contains many variables and not any order so I will drop that column. Same as column name "ref", I will drop specific_bean_origin_or_bar_name. 
+
+```{r}
+choco <-chocolate %>% select(-c('ref', 'most_memorable_characteristics', 'specific_bean_origin_or_bar_name'))
+choco
+```
+
+Now I will rename columns
+
+```{r}
+choco1 <- choco %>% 
+           rename("Company_manufacturer" = "company_manufacturer",
+           "Company_location" = "company_location",
+           "Review_date" = "review_date",
+           "Bean_origen" = "country_of_bean_origin",
+           "Cocoa_percent" = "cocoa_percent",
+           "Ingredients" = "ingredients",
+           "Rating" = "rating")
+print(choco1)
+```
+
+
+### Exploratory Analysis
+Let's start with exploratory analysis.
+In this case we are going to focus in 2 Companies manufacturer
+
+```{r}
+Mars <- choco1 %>%
+  filter(Company_manufacturer == "Mars")
+Habitual <- choco1 %>%
+  filter(Company_manufacturer == "Habitual")
+```
+
+
+```{r}
+ggplot(Mars, aes(x = Bean_origen, y = Cocoa_percent, color = Rating)) +
+  geom_jitter(width = .2)
+```
+In this graph we can see that Beans from Ghana are the ones with better rating but still is necessary to look at the data.
+
+Lets try with Habitual manufacturer.
+
+```{r}
+ggplot(Habitual, aes(x = Bean_origen, y = Cocoa_percent, color = Rating)) +
+  geom_jitter(width = .2)
+```
+
+In this graph we can see that Beans from Blend* and USA are the ones with better ratings. I think is interesting that the percent of cocoa in chocolates is not strictly related to great ratings. 
+
+
+### *Data set 3*
+
+###Loading data
+
+```{r}
+babynames <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-03-22/babynames.csv')
+
+```
+
+### General Information
+
+```{r}
+head(babynames)
+```
+
+```{r}
+str(babynames)
+```
+
+
+### Data Manipulation
+
+Looking for NA.
+
+```{r}
+is.na(babynames)
+```
+There are no missing values. I will not be dropping columns but columns will be rename.
+
+```{r}
+baby <- babynames %>% 
+           rename("Year" = "year",
+           "Sex" = "sex",
+           "Name" = "name",
+           "N" = "n",
+           "Proportion" = "prop")
+print(baby)
+```
+
+
+### Exploratory Analysis
+
+Now we can start with the exploratory Analysis.
+
+```{r}
+ggplot(baby, aes(x = Year, y = N, color = Sex)) +
+  geom_jitter(width = .2)
+```
+
+In this graph we can see how  baby names grew up last century and also and slope at the end. 
+
+```{r}
+top_n(baby, n=5, Name) %>%
+          ggplot(., aes(x=Year, y=Name))+
+              geom_bar(stat='identity')
+```
+
+Most popular names are Zzyzx, Zyyon, Zyyana, Zyvon and Zyvion.
+
+
+
